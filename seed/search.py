@@ -203,6 +203,10 @@ def filter_other_params(queryset, other_params, db_columns):
             return re.match(r"""^!(["'])\1$""", q)
         return False
 
+    def is_numeric_comparison(q):
+        
+        pass
+
     # Build query as Q objects so we can AND and OR.
     query_filters = Q()
     for k, v in other_params.iteritems():
@@ -211,6 +215,7 @@ def filter_other_params(queryset, other_params, db_columns):
             exact_match = is_exact_match(v)
             empty_match = is_empty_match(v)
             not_empty_match = is_not_empty_match(v)
+            is_numeric_comparison = is_numeric_comparison(v)
 
             if exact_match:
                 query_filters &= Q(**{"%s__exact" % k: exact_match.group(2)})
