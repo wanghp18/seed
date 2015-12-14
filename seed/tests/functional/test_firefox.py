@@ -142,13 +142,13 @@ class LogIn(StaticLiveServerTestCase):
 
         # Navigate through Data Saving/Matching
         self.selenium.find_element_by_id('map-data-button').click()
-        self.wait_for_visibility('verify-mapping-table',30)
+        self.wait_for_visibility('verify-mapping-table',300)
         self.selenium.find_element_by_id('save-mapping').click()
-        self.wait_for_visibility('confirm-mapping')
+        self.wait_for_visibility('confirm-mapping',300)
         self.selenium.find_element_by_id('confirm-mapping').click()
-        self.wait_for_visibility('view-buildings',120)
+        self.wait_for_visibility('view-buildings',300)
         self.selenium.find_element_by_id('view-buildings').click()
-        self.wait_for_visibility('verify-mapping-table')
+        self.wait_for_visibility('verify-mapping-table',300)
         self.selenium.find_element_by_id('list-settings').click()
 
         # Retrieve and Verify Upload Details
