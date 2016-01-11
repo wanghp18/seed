@@ -5,25 +5,89 @@
 angular.module('BE.seed.controller.cleansing', [])
 .controller('cleansing_controller', [
   '$scope',
-  '$uibModalInstance',
+  '$uibModal',
   'search_service',
   'cleansingResults',
   'name',
   'uploaded',
   'importFileId',
+  'urls',
   function(
     $scope,
-    $uibModalInstance,
+    $uibModal,
     search_service,
     cleansingResults,
     name,
     uploaded,
-    importFileId
+    importFileId,
+    urls
   ) {
     $scope.name = name;
     $scope.uploaded = moment.utc(uploaded).local().format('MMMM Do YYYY, h:mm:ss A Z');
     $scope.cleansingResults = cleansingResults;
     $scope.importFileId = importFileId;
+
+    /* TEMP DMCQ*/
+
+    $scope.show_apply_labels_modal = function (){
+
+      var tempErrorLabels  = [
+        {
+          id: 8,                
+          name: "value[0] < 1700",
+          text: "value[0] < 1700",
+          color: "blue",
+          label: "primary",
+        },
+        {
+          id: 10,                
+          name: "this error",
+          text: "this error",
+          color: "green",
+          label: "primary",
+        },
+        {
+          id: 9,                
+          name: "that error",
+          text: "that error",
+          color: "orange",
+          label: "warning",
+        },
+        {
+          id: 11,                
+          name: "some other error",
+          text: "some other error",
+          color: "red",
+          label: "danger",
+        }
+      ];
+
+      var applyLabelModalInstance = $uibModal.open(
+        {
+          templateUrl: urls.static_url + 'seed/partials/cleansing_apply_labels_modal.html',
+          controller: 'cleansing_apply_labels_modal_ctrl',
+          resolve: {
+              errorLabels : function() {
+                return tempErrorLabels;
+              }
+          }
+        }
+      );
+
+      applyLabelModalInstance.result.then(
+            function () {
+                //dialog was closed with 'Done' button.
+                //todo
+            }, 
+            function (message) {
+               //dialog was 'dismissed,' which means it was cancelled...so nothing to do. 
+               //todo
+            }
+        );
+
+    };
+
+    /* END TEMP DMCQ */
 
     $scope.close = function () {
       $uibModalInstance.close();
