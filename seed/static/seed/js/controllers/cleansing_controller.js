@@ -5,6 +5,7 @@
 angular.module('BE.seed.controller.cleansing', [])
 .controller('cleansing_controller', [
   '$scope',
+  '$uibModalInstance',
   '$uibModal',
   'search_service',
   'cleansingResults',
@@ -14,6 +15,7 @@ angular.module('BE.seed.controller.cleansing', [])
   'urls',
   function(
     $scope,
+    $uibModalInstance,
     $uibModal,
     search_service,
     cleansingResults,
