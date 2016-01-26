@@ -41,8 +41,10 @@ def get_cleansing_results(request):
 
     # Confirm this import file exists and the file belongs to the organization.
     try:
-        ImportFile.objects.get(pk=import_file_id,
-            import_record__super_organization=org)
+        ImportFile.objects.get(
+            pk=import_file_id,
+            import_record__super_organization=org
+        )
     except ImportFile.DoesNotExist:
         return HttpResponseBadRequest
 
