@@ -46,7 +46,7 @@ def get_cleansing_results(request):
             import_record__super_organization=org
         )
     except ImportFile.DoesNotExist:
-        return HttpResponseBadRequest
+        return HttpResponseBadRequest('Invalid import file id.')
 
     cleansing_results = get_cache_raw(Cleansing.cache_key(import_file_id))
     label_names = []
