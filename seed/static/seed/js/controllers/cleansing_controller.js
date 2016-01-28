@@ -248,7 +248,8 @@ angular.module('BE.seed.controller.cleansing', [])
     
     $scope.name = name;
     $scope.uploaded = moment.utc(uploaded).local().format('MMMM Do YYYY, h:mm:ss A Z');
-    $scope.cleansingResults = cleansingResults;
+    $scope.cleansingResults = cleansingResults.cleansing_results;
+    $scope.cleansingErrorLabels = cleansingResults.labels;
     $scope.importFileId = importFileId;
 
     // Setup local props for grid

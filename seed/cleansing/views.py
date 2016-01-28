@@ -69,8 +69,10 @@ def get_cleansing_results(request):
         'status': 'success',
         'message': 'Cleansing complete',
         'progress': 100,
-        'data': cleansing_results,
-        'labels': [l.to_dict() for l in labels]
+        'data': {
+            'cleansing_results': cleansing_results,
+            'labels': [l.to_dict() for l in labels]
+        }
     }
 
 
