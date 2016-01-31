@@ -9,6 +9,7 @@ angular.module('BE.seed.controller.cleansing', [])
   '$uibModal',
   'search_service',
   'cleansingResults',
+  'label_service',
   'name',
   'uploaded',
   'importFileId',
@@ -19,6 +20,7 @@ angular.module('BE.seed.controller.cleansing', [])
     $uibModal,
     search_service,
     cleansingResults,
+    label_service,
     name,
     uploaded,
     importFileId,
@@ -35,38 +37,7 @@ angular.module('BE.seed.controller.cleansing', [])
     /*  Show modal to allow user to select subset of error labels 
         from all errors shown.*/
     $scope.show_apply_labels_modal = function (){
-
-      var tempErrorLabels  = [
-        {
-          id: 8,                
-          name: "value[0] < 1700",
-          text: "value[0] < 1700",
-          color: "blue",
-          label: "primary",
-        },
-        {
-          id: 10,                
-          name: "this error",
-          text: "this error",
-          color: "green",
-          label: "primary",
-        },
-        {
-          id: 9,                
-          name: "that error",
-          text: "that error",
-          color: "orange",
-          label: "warning",
-        },
-        {
-          id: 11,                
-          name: "some other error",
-          text: "some other error",
-          color: "red",
-          label: "danger",
-        }
-      ];
-
+     
       var applyLabelModalInstance = $uibModal.open(
         {
           templateUrl: urls.static_url + 'seed/partials/cleansing_apply_labels_modal.html',
@@ -74,6 +45,9 @@ angular.module('BE.seed.controller.cleansing', [])
           resolve: {
               errorLabels : function() {
                 return $scope.errorLabels;
+              },
+              cleansingResults : function() {
+                return $scope.cleansingResults;
               }
           }
         }
@@ -81,26 +55,26 @@ angular.module('BE.seed.controller.cleansing', [])
 
       applyLabelModalInstance.result.then(
             function () {
-                //dialog was closed with 'Done' button.
-                //todo
+              //dialog was closed with 'Done' button. Right now nothing to do but perhaps later
+              //we want to show some kind of 'num buildings updated' label in this view.
             }, 
             function (message) {
                //dialog was 'dismissed,' which means it was cancelled...so nothing to do. 
-               //todo
             }
         );
 
     };
 
+
+    /* Handle 'Close' button click for this cleansing modal */
     $scope.close = function () {
       $uibModalInstance.close();
     };
 
+    /* Handle user interactions with sort fields (called on enter key) */
     $scope.sortData = function() {
       $scope.cleansingResults = _.sortByOrder($scope.cleansingResults, [$scope.search.sort_column], [$scope.search.sort_reverse ? 'desc' : 'asc']);
     };
-
-
 
 
 
@@ -242,6 +216,27 @@ angular.module('BE.seed.controller.cleansing', [])
 
     }
 
+    /* Take a cleansing results object and return a  array of unique error messages */
+    function get_unique_error_messages(cleansingResults){
+      return _($scope.cleansingResults).chain().pluck('cleansing_results').flatten().pluck('message').unique().value();
+    }
+
+    /* Take a list of cleansing error strings and build an array of labels.
+       User the provided set of existing labels and create 'temporary'
+       labels (with no id) for the remaining cleansing error messages without matching labels. */
+    function create_error_labels(uniqueErrorMessagesArr, existingLabelsArr){
+
+      var allErrorLabels = angular.copy(existingLabelsArr);
+      
+      _.each(uniqueErrorMessagesArr, function (errorMessage){
+        if (_.findWhere(existingLabelsArr, {name: errorMessage})===undefined){
+          var newTempLabel = label_service.create_temp_label(errorMessage, 'red');
+          allErrorLabels.push(newTempLabel);
+        }
+      });
+
+      return allErrorLabels;
+    }
    
     /* INIT SCOPE, LOCAL PROPERTIES AND SEARCH */
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -249,8 +244,12 @@ angular.module('BE.seed.controller.cleansing', [])
     $scope.name = name;
     $scope.uploaded = moment.utc(uploaded).local().format('MMMM Do YYYY, h:mm:ss A Z');
     $scope.cleansingResults = cleansingResults.cleansing_results;
-    $scope.cleansingErrorLabels = cleansingResults.labels;
     $scope.importFileId = importFileId;
+
+    //Build an array of 'error' labels, creating temporary labels
+    //for those that do not exist yet.
+    var uniqueErrorMessages = get_unique_error_messages(cleansingResults.cleansing_results);
+    $scope.errorLabels = create_error_labels(uniqueErrorMessages, cleansingResults.labels);
 
     // Setup local props for grid
     init_fields_and_columns();
@@ -268,10 +267,6 @@ angular.module('BE.seed.controller.cleansing', [])
       columns,
       $scope.search.column_prototype
     );
-
-    //TODO
-    //get a unique array of all error messages
-    //$scope.errorLabels = get_somehow_from($scope.cleansingResults);
 
     //Init search
     $scope.search.init_storage('cleansing');

@@ -272,6 +272,12 @@ angular.module('BE.seed.service.label',
         ];
     }
 
+    /* Check if color string is a valid color */
+    function is_valid_color(color){
+        var colorsArr = get_available_colors();
+        return _.contains(_.pluck(colorsArr, "color"), color);
+    }
+
     /*  Add a few properties to the label object so that it
         works well with UI components.
     */
@@ -281,6 +287,34 @@ angular.module('BE.seed.service.label',
         // create 'text' property needed for ngTagsInput control
         lbl.text = lbl.name;
         return lbl;
+    }
+
+
+    /*  Create a temporary label as a placeholder on the front
+        end during user action that may ultimately create
+        a label on the back en.. */
+
+    function create_temp_label(temp_name, temp_color){
+
+        if (!temp_color || !is_valid_color(temp_color)){
+            console.log("Invalid color argument '" + temp_color + "' ') in create_temp_label. Defaulting to red.");
+            temp_color = "red";
+        }
+        if (!temp_name){
+            temp_name = "Unnamed";
+        }        
+
+        //An id of null indicates its a temporary label  
+        var temp_label = {                
+            id: null,                             
+            name: temp_name,
+            color: temp_color,
+            label: label_helper_service.lookup_label(temp_color),
+            text: temp_name,
+            is_applied : false
+        };
+
+        return temp_label;
     }
 
     /* Public API */
@@ -293,7 +327,8 @@ angular.module('BE.seed.service.label',
         update_label : update_label,
         delete_label : delete_label,
         update_building_labels : update_building_labels,
-        get_available_colors : get_available_colors
+        get_available_colors : get_available_colors,
+        create_temp_label : create_temp_label,
     
     };
 
