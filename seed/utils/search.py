@@ -23,7 +23,7 @@ def strip_suffixes(k, suffixes):
 
 
 def is_column(k, columns):
-    sanitized = strip_suffixes(k, ['__lt', '__gt', '__lte', '__gte'])
+    sanitized = strip_suffixes(k, ['__lt', '__gt', '__lte', '__gte', '__isnull'])
     if sanitized in columns:
         return True
     return False
@@ -51,6 +51,13 @@ def is_not_empty_match(q):
     # Exclamation mark and empty matching quotes?
     if is_string_query(q):
         return re.match(r"""^!(["'])\1$""", q)
+    return False
+
+
+def is_case_insensitive_match(q):
+    # Carat and matching quotes? eg ^"sacramento"
+    if is_string_query(q):
+        return re.match(r"""^\^(["'])(.+)\1$""", q)
     return False
 
 

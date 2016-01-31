@@ -22,6 +22,7 @@ angular.module('BE.seed.controllers', [
     'BE.seed.controller.accounts',
     'BE.seed.controller.admin',
     'BE.seed.controller.building_detail',
+    'BE.seed.controller.building_detail_update_labels_modal_ctrl',
     'BE.seed.controller.building_list',
     'BE.seed.controller.buildings_reports',
     'BE.seed.controller.buildings_settings',
@@ -62,12 +63,12 @@ angular.module('BE.seed.filters', [
     ]);
 angular.module('BE.seed.directives', [
     'sdEnter',
-    'beUploader',
-    'beLabel',
-    'beResizable',
-    'basicBuildingInfoChart',
-    'dropdown',
-    'checkLabelExists'
+    'sdUploader',
+    'sdLabel',
+    'sdResizable',
+    'sdBasicBuildingInfoChart',
+    'sdDropdown',
+    'sdCheckLabelExists'
     ]);
 angular.module('BE.seed.services', [
     'BE.seed.service.audit',

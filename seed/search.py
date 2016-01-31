@@ -180,11 +180,14 @@ def filter_other_params(queryset, other_params, db_columns):
             exact_match = search_utils.is_exact_match(v)
             empty_match = search_utils.is_empty_match(v)
             not_empty_match = search_utils.is_not_empty_match(v)
+            case_insensitive_match = search_utils.is_case_insensitive_match(v)
             is_numeric_expression = search_utils.is_numeric_expression(v)
             is_string_expression = search_utils.is_string_expression(v)
 
             if exact_match:
                 query_filters &= Q(**{"%s__exact" % k: exact_match.group(2)})
+            elif case_insensitive_match:
+                query_filters &= Q(**{"%s__iexact" % k: case_insensitive_match.group(2)})
             elif empty_match:
                 query_filters &= Q(**{"%s__exact" %
                                       k: ''}) | Q(**{"%s__isnull" %
@@ -214,7 +217,12 @@ def filter_other_params(queryset, other_params, db_columns):
             else:
                 query_filters &= Q(**{"%s__icontains" % k: v})
 
-    queryset = queryset.filter(query_filters)
+    try:
+        queryset = queryset.filter(query_filters)
+    except ValueError:
+        # Return nothing if invalid queries happen. Most likely
+        # this is caused by using operators in the wrong fields.
+        queryset = queryset.none()
 
     # handle extra_data with json_query
     for k, v in other_params.iteritems():
@@ -223,6 +231,7 @@ def filter_other_params(queryset, other_params, db_columns):
             exact_match = search_utils.is_exact_match(v)
             empty_match = search_utils.is_empty_match(v)
             not_empty_match = search_utils.is_not_empty_match(v)
+            case_insensitive_match = search_utils.is_case_insensitive_match(v)
 
             if empty_match:
                 # Filter for records that DO NOT contain this field OR
@@ -247,6 +256,10 @@ def filter_other_params(queryset, other_params, db_columns):
             if exact_match:
                 conditions['value'] = exact_match.group(2)
                 conditions['key_cast'] = 'text'
+            elif case_insensitive_match:
+                conditions['value'] = case_insensitive_match.group(2)
+                conditions['key_cast'] = 'text'
+                conditions['case_insensitive'] = True
             elif k.endswith(('__gt', '__gte')):
                 k = search_utils.strip_suffixes(k, ['__gt', '__gte'])
                 conditions['cond'] = '>'
@@ -381,6 +394,8 @@ def build_json_params(order_by, sort_reverse):
     db_columns['project_building_snapshots__status_label__name'] = ''
     db_columns['project__slug'] = ''
     db_columns['canonical_building__labels'] = ''
+    db_columns['children'] = ''
+    db_columns['parents'] = ''
 
     if order_by not in db_columns:
         extra_data_sort = True
@@ -456,6 +471,7 @@ def create_building_queryset(
     :param other_orgs: list of other orgs to ``or`` the query
     """
     distinct_order_by = order_by.lstrip('-')
+
     if other_orgs:
         if extra_data_sort:
             return BuildingSnapshot.objects.filter(
