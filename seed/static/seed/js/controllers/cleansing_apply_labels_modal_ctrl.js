@@ -8,11 +8,13 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
   '$uibModalInstance',
   'errorLabels',
   'cleansingResults',
+  'label_service',
   function(
     $scope,
     $uibModalInstance,
     errorLabels,
-    cleansingResults
+    cleansingResults,
+    label_service
     ){
 
 
@@ -57,12 +59,13 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
         $scope.apply_labels_complete = false;
         $scope.apply_labels_error = false;
 
-        var apply_labels_data = build_apply_labels_data();  
+        //Get data in right format for service
+        var bulk_update_labels_data = build_bulk_update_labels_data();  
 
-        //show progress
+        //TODO: show progress
 
         //do call
-        label_service.update_building_labels(apply_labels_data).then(
+        label_service.bulk_update_building_labels(bulk_update_labels_data).then(
             function(data){
                 //if labels were applied successfully, 
                 //switch mode of modal to show success message and 'done'
@@ -84,29 +87,39 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
 
 
     /* Build an array of objects defining labels and the buildings they should be applied to */
-    function build_apply_labels_data(){
+    function build_bulk_update_labels_data(){
 
-        var apply_labels_data = [];
-        var selectedLabels = _.filter(errorLabels, is_checked_add);
+        var bulk_update_labels_data = [];
+        var selectedLabels = _.filter(errorLabels, function(label){
+            return label.is_checked_add===true;
+        });
 
         _.each(selectedLabels, function(label){
             
-            var apply_label_obj = {
+            var update_label_data = {
                 label_id: label.id,
                 building_ids: []
             };
 
-            _.each($scope.cleansingResults, function(cr){
-                if (cr.message === apply_label.name){
-                    apply_label_obj.building_ids.push(cr.id);
+            //collect all building ids this label should be applied to
+            _.each($scope.cleansingResults, function(cleansingResult){
+                if (_.findWhere(cleansingResult.cleansing_results, {message: label.name})){
+                    update_label_data.building_ids.push(cleansingResult.id);
                 }
             });
 
-            apply_labels_data.push( apply_label_obj );
+            //assign defaults for a new label created during data cleansing
+            if (update_label_data.label_id===null){
+                update_label.label_name = label.name;                 
+                update_label_data.color = "red";
+                update_label_data.label = "danger";
+            }
+
+            bulk_update_labels_data.push( update_label_data );
         
         });
 
-        return apply_labels_data;
+        return bulk_update_labels_data;
     }
 
    
