@@ -21,6 +21,11 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
     /* DEFINE SCOPE AND LOCAL VARS  */
     /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */   
 
+    //make sure each incoming error label is set to unchecked
+    _.each(errorLabels, function(label){
+        label.is_checked_add = false;
+    });
+
     // keep track of process of applying labels
     $scope.apply_labels_complete = false;
 
@@ -31,7 +36,7 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
     // Note that some labels might be 'temporary' as they haven't
     // been created on the server yet. 
     $scope.errorLabels = errorLabels;
-
+    
     // cleansingResults array: this is an array of objects with a building "id" property 
     // and a "cleansingResults" child array.
     // This child "cleansingResults" array contains one or more objects describing the error row, 
@@ -41,6 +46,10 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
 
     // Var for view
     $scope.num_labels_applied = 0;
+
+    /* At least one apply button checked */
+    $scope.is_checked = false;
+
 
     /* HANDLE UI INTERACTIONS */
     /* ~~~~~~~~~~~~~~~~~~~~~~ */   
@@ -56,15 +65,12 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
         $uibModalInstance.close();    
     };
 
-    /* At least one apply button checked */
-    $scope.is_checked = false;
-
-    $scope.on_apply_change = function(){
+    /* User has clicked an 'Select' row button */
+    $scope.on_select_change = function(){
        $scope.is_checked = _.some($scope.errorLabels, function(label){
             return label.is_checked_add === true;
        });
     };
-
 
     /*  Use has clicked 'Apply Now' on modal, which means
         apply all error labels they have selected */
