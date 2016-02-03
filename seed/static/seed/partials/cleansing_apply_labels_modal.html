@@ -34,6 +34,7 @@
 
                             <button type="button"
                                     uib-btn-checkbox
+                                    ng-change="on_apply_change()"
                                     ng-model="label.is_checked_add"
                                     btn-checkbox-true="true"
                                     btn-checkbox-false="false"
@@ -52,7 +53,7 @@
 
         <div ng-show="apply_labels_complete">
             <div class="col-sm-12" ng-show="delete_state == 'success'">
-                    {$ have been applied to relevant rows.
+                {$ have been applied to relevant rows.
             </div>
         </div>
 
@@ -68,6 +69,7 @@
                 ng-show="!apply_labels_complete"
                 class="btn btn-primary"
                 style="min-width:90px;"
+                ng-disabled="!is_checked"
                 ng-click="apply_now()">
                 Apply Now</button>
         <button type="button"

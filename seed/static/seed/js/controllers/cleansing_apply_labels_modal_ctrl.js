@@ -56,6 +56,16 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
         $uibModalInstance.close();    
     };
 
+    /* At least one apply button checked */
+    $scope.is_checked = false;
+
+    $scope.on_apply_change = function(){
+       $scope.is_checked = _.some($scope.errorLabels, function(label){
+            return label.is_checked_add === true;
+       });
+    };
+
+
     /*  Use has clicked 'Apply Now' on modal, which means
         apply all error labels they have selected */
     $scope.apply_now = function() {
@@ -67,7 +77,7 @@ angular.module('BE.seed.controller.cleansing_apply_labels_modal_ctrl', [])
         var selected_labels = _.filter(errorLabels, function(label){
             return label.is_checked_add===true;
         });
-        var label_ids = _.pluck(selectedLabels, 'id');
+        var label_ids = _.pluck(selected_labels, 'id');
         var bulk_updates = build_bulk_update_labels_data(selected_labels, $scope.cleansingResults);  
 
         //save number of labels for complete message
