@@ -2114,6 +2114,30 @@ a:not([href]) {
 
 }
 
+/* Styles for data cleansing apply labels modal */
+/* TODO: should refactor with styles for #update-building-labels-modal */
+#cleansing-apply-labels-modal {
+
+  .modal-body {
+      margin: 0px 11px;
+  }
+
+  .table-list-container {
+    border: 1px solid #EEE;
+    overflow-y:auto;
+    max-height:350px;
+    margin-bottom: 10px;
+    table {
+      
+    }
+    th, td {
+      border: 0px;
+    }
+  }
+}
+
+
+
 /* Styles to override ngInputTags to get correct tag colors */
 
 tags-input .tags {

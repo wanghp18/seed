@@ -11,32 +11,51 @@
     </div>
     <div class="modal-body">
 
-        <div class="edit_text" style="margin-bottom:20px;">You can mark all rows where an error occurs with a label for that error. To do so,
-        select the error labels you want marked from the list below.</div>
+        <div ng-show="!apply_labels_complete"
+            class="row" >
 
-        <div class="table-list-container"  >
+            <div ng-show="apply_labels_error" 
+                class="alert alert-danger " >
+                <strong>Error</strong> {$ apply_labels_error $} </strong>.
+            </div>          
 
-            <table ng-show="errorLabels.length > 0" class="table table-striped">
-                <tr ng-repeat="label in errorLabels">
-                    <td class="label_column">
-                        <span class="label label-{$ label.label $}">{$ label.name $}</span>
-                    </td>
-                    <td align="right">
+            <div class="edit_text" style="margin-bottom:20px;">
+                You can mark all rows where an error occurs with a label for that error. To do so,
+                select the error labels you want marked from the list below.</div>
 
-                        <button type="button"
-                                uib-btn-checkbox
-                                ng-model="label.is_checked_add"
-                                btn-checkbox-true="true"
-                                btn-checkbox-false="false"
-                                class="btn btn-sm btn-default action_link"
-                                ng-class="{'btn-primary':label.is_checked_add}"
-                                >Select
-                        </button>
+            <div class="table-list-container"  >
 
-                    </td>
-                </tr>
-            </table>
+                <table ng-show="errorLabels.length > 0" class="table table-striped">
+                    <tr ng-repeat="label in errorLabels">
+                        <td class="label_column">
+                            <span class="label label-{$ label.label $}">{$ label.name $}</span>
+                        </td>
+                        <td align="right">
+
+                            <button type="button"
+                                    uib-btn-checkbox
+                                    ng-model="label.is_checked_add"
+                                    btn-checkbox-true="true"
+                                    btn-checkbox-false="false"
+                                    class="btn btn-sm btn-default action_link"
+                                    ng-class="{'btn-primary':label.is_checked_add}"
+                                    >Select
+                            </button>
+
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
         </div>
+
+
+        <div ng-show="apply_labels_complete">
+            <div class="col-sm-12" ng-show="delete_state == 'success'">
+                    {$ have been applied to relevant rows.
+            </div>
+        </div>
+
     </div>
     <div class="modal-footer">
         <button type="button"
@@ -44,7 +63,7 @@
                 class="btn btn-primary"
                 style="min-width:90px;"
                 ng-click="done()">
-                Done</button>
+                Ok</button>
         <button type="button"
                 ng-show="!apply_labels_complete"
                 class="btn btn-primary"

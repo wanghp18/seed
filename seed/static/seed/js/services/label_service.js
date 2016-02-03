@@ -229,14 +229,14 @@ angular.module('BE.seed.service.label',
 
     /* 
 
-    This method applies/removes a series of labels to buildings. Each label is applied to a sets of buildings
-    and/or removed from a set of buildings. 
+    This method applies and/or removes labels to sets of buildings. 
+    Each label is applied to a set of building ids and/or removed from a set of building ids. 
 
-    @param {array} apply_label_objs     An array of objects that define a label id (or new label)
-                                        and the set of buildings to apply the label to, or remove 
-                                        the label from.
+    @param {array} label_ids                An array of label_ids that will be used in this operation
+    @param {array} update_label_objs        An array of objects that define a label id and an 'apply'
+                                            and 'remove' set of buildings for that label.
 
-    Each apply_label_obj in the argument array should have the following structure:
+    Each apply_label_obj in the update_label_objs array should have the following structure:
 
         For existing labels...
         { 
@@ -247,32 +247,57 @@ angular.module('BE.seed.service.label',
 
         For new labels...
         {            
-            label_id: null,
+            label_id: null,                     //null means this is a new label
             label_name: "new label",
             label_color: "red",
             label_label: "primary",           
-            add_to_building_ids : [1,4]       //An array of building IDs to apply label to 
+            add_to_building_ids : [1,4]         //An array of building IDs to apply label to after creation 
         }
 
     Note that building ids should be canonical snapshots.
 
     */
 
-    function bulk_update_building_labels(apply_label_objs) {
+    function bulk_update_building_labels(label_ids, update_objs) {
 
-        //A bit defensive coding : let's test array to make sure it's 
-        //properly formed and throw an error if not.
-        validate_apply_labels_objs(apply_label_objs);
+        //VALIDATE ARGUMENTS
+        //A bit defensive coding : let's test to make sure 
+        //the arguments are properly formed and throw an error if not.
+        if (!angular.isDefined(label_ids) || !angular.isArray(label_ids) || label_ids.length===0){
+            throw "Invalid argument. label_ids must be an array with one or more elements.";
+        }
+        if (!angular.isDefined(update_objs) || !angular.isArray(update_objs) || update_objs.length===0){
+            throw "Invalid argument. update_objs must be an array with one or more elements.";
+        }
+        _.each(update_objs, function(update_obj){
+            if (angular.isNumber(update_obj.label_id)===false && update_obj.label_id!==null){
+                throw "Invalid property: label_id must be an integer or 'null'";
+            }            
+            //if id is null, the new label properties should be defined
+            if (update_obj.label_id===null){
+                if (!angular.isDefined(update_obj.label_name)){
+                    throw "Invalid property: label_name must be defined";
+                }   
+                if (!angular.isDefined(update_obj.label_color)){
+                    throw "Invalid property: label_color must be defined";
+                }  
+                if (!angular.isDefined(update_obj.label_label)){
+                    throw "Invalid property: label_label must be defined";
+                }  
+            }
+        });
 
+        //MAKE SERVER CALL
         var defer = $q.defer();
         $http({
             method: 'PUT',            
-            'url': window.BE.urls.update_building_labels,
+            'url': window.BE.urls.bulk_update_building_labels,
             'data': {
-                'bulk_update_labels_data' : apply_label_objs
+                'label_ids' : label_ids,
+                'updates'   : update_objs
             }
         }).success(function(data, status, headers, config) {
-
+            defer.resolve(data);
         }).error(function(data, status, headers, config) {
             defer.reject(data, status);
         });
@@ -280,29 +305,6 @@ angular.module('BE.seed.service.label',
     }
 
 
-    function validate_apply_labels_objs(apply_label_objs) {
-
-        if (!angular.isArray(apply_label_objs)){
-            throw "Invalid argument";
-        }
-        _.each(apply_label_objs, function(apply_label_obj){
-            if (!angular.isDefined(apply_label_obj.id) || !angular.isNumber(apply_label_obj.id)){
-                throw "Invalid property: label_id must be an integer or 'null'";
-            }            
-            if (apply_label_obj.id===null){
-                if (!angular.isDefined(apply_label_obj.label_name)){
-                    throw "Invalid property: label_name must be defined";
-                }   
-                if (!angular.isDefined(apply_label_obj.label_color)){
-                    throw "Invalid property: label_color must be defined";
-                }  
-                if (!angular.isDefined(apply_label_obj.label_label)){
-                    throw "Invalid property: label_label must be defined";
-                }  
-            }
-        });
-        //do nothing, everything is ok.
-    }
 
 
     /*  Gets the list of supported colors for labels, based on default bootstrap
