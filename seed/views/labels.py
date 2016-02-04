@@ -16,6 +16,7 @@ from seed.decorators import (
 from seed.filters import (
     LabelFilterBackend,
     BuildingFilterBackend,
+    SimpleBuildingFilterBackend,
 )
 from seed.pagination import (
     FakePaginiation,
@@ -29,6 +30,7 @@ from seed.models import (
     CanonicalBuilding,
 )
 from seed.serializers.labels import (
+    CleansingBuildingLabelsSerializer,
     LabelSerializer,
     UpdateBuildingLabelsSerializer,
 )
@@ -126,3 +128,60 @@ class UpdateBuildingLabelsAPIView(generics.GenericAPIView):
         return response.Response({
             "num_buildings_updated": building_snapshots.count(),
         })
+
+
+class CleansingBuildingLabelsAPIView(generics.GenericAPIView):
+    filter_backends = (SimpleBuildingFilterBackend,)
+    queryset = BuildingSnapshot.objects.all()
+    serializer_class = CleansingBuildingLabelsSerializer
+
+    _organization = None
+
+    def get_organization(self):
+        if self._organization is None:
+            try:
+                self._organization = self.request.user.orgs.get(
+                    pk=self.request.query_params["organization_id"],
+                )
+            except ObjectDoesNotExist:
+                self._organization = self.request.user.orgs.all()[0]
+        return self._organization
+
+    def put(self, *args, **kwargs):
+        """
+        Payload:
+        {
+            label_ids: [1, 2],
+            building_ids: [1, 2, 3, 4],
+            updates: [
+                { 
+                  label_id: 1,
+                  building_ids: [1,2,3]
+                },
+                { 
+                  label_id: 2,
+                  building_ids: [3,4,]
+                },
+                { 
+                   label_id: null,
+                   label_name: "new label",
+                   label_color: "red",
+                   label_label: "primary",
+                   building_ids : [1, 4]
+                }
+            ]
+        }
+        """
+        queryset = self.filter_queryset(self.get_queryset()) \
+            .filter(super_organization=self.get_organization)
+
+        serializer = self.get_serializer(
+            data=self.request.data,
+            queryset=queryset,
+            super_organization=self.get_organization(),
+        )
+        serializer.is_valid(raise_exception=True)
+
+        serializer.save()
+
+        return response.Response({})
