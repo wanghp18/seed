@@ -11,6 +11,7 @@ from django.conf.urls import url
 from rest_framework import routers
 
 from seed.views.labels import (
+    CleansingBuildingLabelsAPIView,
     LabelViewSet,
     UpdateBuildingLabelsAPIView,
 )
@@ -25,6 +26,11 @@ urlpatterns = [
         r'^/update-building-labels/$',
         UpdateBuildingLabelsAPIView.as_view(),
         name="update_building_labels",
+    ),
+    url(
+        r'^/cleansing-building-labels/$',
+        CleansingBuildingLabelsAPIView.as_view(),
+        name="cleansing_building_labels",
     ),
 ]
 

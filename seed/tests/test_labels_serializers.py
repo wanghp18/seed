@@ -19,6 +19,7 @@ from seed.models import (
     CanonicalBuilding,
 )
 from seed.serializers.labels import (
+    CleansingBuildingLabelsSerializer,
     LabelSerializer,
     UpdateBuildingLabelsSerializer,
 )
@@ -237,3 +238,89 @@ class TestUpdateBuildingLabelsSerializer(TestCase):
         self.assertFalse(bs_1.canonical_building.labels.filter(pk=label_b.pk).exists())
         self.assertFalse(bs_2.canonical_building.labels.filter(pk=label_a.pk).exists())
         self.assertFalse(bs_2.canonical_building.labels.filter(pk=label_b.pk).exists())
+
+
+class TestCleansingBuildingLabelsSerializer(TestCase):
+    def test_initialization_requires_organization_as_argument(self):
+        with self.assertRaises(KeyError):
+            CleansingBuildingLabelsSerializer(
+                queryset=BuildingSnapshot.objects.none(),
+            )
+
+        organization = SuperOrganization.objects.create(name='test-org')
+        CleansingBuildingLabelsSerializer(
+            queryset=BuildingSnapshot.objects.none(),
+            super_organization=organization,
+        )
+
+    def test_initialization_requires_queryset_as_argument(self):
+        organization = SuperOrganization.objects.create(name='test-org')
+
+        with self.assertRaises(KeyError):
+            CleansingBuildingLabelsSerializer(
+                super_organization=organization,
+            )
+
+        CleansingBuildingLabelsSerializer(
+            super_organization=organization,
+            queryset=BuildingSnapshot.objects.none(),
+        )
+
+    def test_labels_are_applied_and_created(self):
+        organization = SuperOrganization.objects.create(name='test-org')
+
+        label_a = Label.objects.create(
+            color="red",
+            name="label-a",
+            super_organization=organization,
+        )
+        label_b = Label.objects.create(
+            color="red",
+            name="label-b",
+            super_organization=organization,
+        )
+
+        bs_1 = SEEDFactory.building_snapshot()
+        bs_2 = SEEDFactory.building_snapshot()
+
+        data = {
+            'label_ids': [label_a.pk, label_b.pk],
+            'building_ids': [bs_1.pk, bs_2.pk],
+            'updates': [
+                {
+                    'label_id': label_a.pk,
+                    'building_ids': [bs_1.pk]
+                },
+                {
+                    'label_id': label_b.pk,
+                    'building_ids': [bs_2.pk]
+                },
+                { 
+                    'label_id': None,
+                    'label_name': "new label",
+                    'label_color': "red",
+                    'building_ids' : [bs_2.pk]
+                }
+            ],
+        }
+
+        serializer = CleansingBuildingLabelsSerializer(
+            data=data,
+            super_organization=organization,
+            queryset=BuildingSnapshot.objects.all(),
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+        serializer.save()
+
+        # Make sure new label was created.
+        self.assertEqual(3, Label.objects.all().count())
+
+        bs_1 = BuildingSnapshot.objects.get(pk=bs_1.pk)
+        bs_2 = BuildingSnapshot.objects.get(pk=bs_2.pk)
+
+        self.assertTrue(bs_1.canonical_building.labels.filter(pk=label_a.pk).exists())
+        self.assertTrue(bs_2.canonical_building.labels.filter(pk=label_b.pk).exists())
+
+        # Make sure building 2 has 2 labels, label_b, and new one
+        self.assertTrue(2, bs_2.canonical_building.labels.all().count())

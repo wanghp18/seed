@@ -8,6 +8,7 @@ from rest_framework import fields
 from rest_framework import serializers
 
 from seed.models import (
+    CanonicalBuilding,
     StatusLabel as Label,
 )
 
@@ -89,5 +90,68 @@ class UpdateBuildingLabelsSerializer(serializers.Serializer):
         for cb in self.queryset:
             cb.labels.remove(*remove_labels)
             cb.labels.add(*add_labels)
+
+        return self.queryset
+
+
+class CleansingBuildingLabelsSerializer(serializers.Serializer):
+    label_ids = serializers.ListSerializer(
+        child=fields.IntegerField(),
+        allow_empty=False,
+    )
+    updates = serializers.ListSerializer(
+        child=fields.DictField(),
+        allow_empty=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.queryset = kwargs.pop('queryset')
+        self.super_organization = kwargs.pop('super_organization')
+        super(CleansingBuildingLabelsSerializer, self).__init__(*args, **kwargs)
+
+    def create(self, validated_data):
+        labels = list(Label.objects.filter(
+            pk__in=validated_data['label_ids'],
+            super_organization=self.super_organization,
+        ))
+
+        # Map of label_id -> label
+        label_map = {}
+        for l in labels:
+            label_map[l.pk] = l
+
+        buildings = list(self.queryset)
+
+        # Map of building_id -> building
+        building_map = {}
+        for b in buildings:
+            building_map[b.pk] = b
+
+        for update in validated_data['updates']:
+            if update['label_id']:
+                label = label_map[update['label_id']]
+            else:
+                label, _ = Label.objects.get_or_create(
+                    name=update['label_name'],
+                    color=update['label_color'],
+                    super_organization=self.super_organization
+                )
+
+            # Add label to each building in add list
+            for building_id in update['building_ids']:
+                building = building_map[building_id]
+
+                # Add inactive canonical building if one doesn't exist.
+                if not building.canonical_building:
+                    c = CanonicalBuilding.objects.create(
+                        active=False,
+                        canonical_snapshot=building
+                    )
+                    building.canonical_building = c
+                    building.save()
+                else:
+                    c = building.canonical_building
+
+                c.labels.add(label)
 
         return self.queryset

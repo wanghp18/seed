@@ -51,3 +51,14 @@ class BuildingFilterBackend(filters.BaseFilterBackend):
                 id__in=request.query_params.getlist('selected_buildings'),
             )
         return buildings_queryset
+
+
+class SimpleBuildingFilterBackend(filters.BaseFilterBackend):
+    """
+    Implements the filtering of buildings as a Django Rest Framework filter
+    backend.
+    """
+    def filter_queryset(self, request, queryset, view):
+        return queryset.filter(
+            id__in=request.query_params.getlist('building_ids')
+        )
